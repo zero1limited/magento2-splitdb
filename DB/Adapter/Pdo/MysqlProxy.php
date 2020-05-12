@@ -33,6 +33,10 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
 
     protected $readConnection;
 
+    protected $splitDbLogger;
+
+    protected $logLevel = \Monolog\Logger::DEBUG;
+
     /**
      * Constructor
      *
@@ -51,9 +55,11 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
         array $config = [],
         SerializerInterface $serializer = null
     ) {
-        if(isset($config['enable_splitdb_logging'])){
-            $this->enableLogging = (bool)$config['enable_splitdb_logging'];
+        if(isset($config['log_level'])){
+            $this->logLevel = $config['log_level'];
         }
+        $this->splitDbLogger = ObjectManager::getInstance()->get(\Zero1\SplitDb\Logger::class);
+
         if(isset($config['slaves'])){
             // keep the same slave throughout the request
             $slaveIndex = rand(0, (count($config['slaves']) - 1));
@@ -101,7 +107,7 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
     {
         // for certain circumstances we want to for using the writer
         if(php_sapi_name() == 'cli'){
-            $this->log('WRITER is cli: '.php_sapi_name());
+            $this->log('is cli', ['sapi_name' => php_sapi_name()]);
             return false;
         }
 
@@ -130,7 +136,10 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
         ];
         foreach($writerSqlIdentifiers as $writerSqlIdentifier){
             if(stripos($sql, $writerSqlIdentifier) !== false){
-                $this->log('WRITER identifier found, '.$writerSqlIdentifier.' '.$sql);
+                $this->log('WRITER identifier found', [
+                    'identifier' => $writerSqlIdentifier,
+                    'sql' => $sql
+                ]);
                 return false;
             }
         }
@@ -138,11 +147,12 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
         return true;
     }
 
-    protected function log($message)
+    protected function log($message, $context = [], $severity = null)
     {
-        if($this->enableLogging){
-            file_put_contents(realpath(__DIR__.'/../../../../../../../').'/var/log/splitdb.log', '['.date('c').'] '.$message.PHP_EOL, FILE_APPEND);
+        if(!$severity){
+            $severity = $this->logLevel;
         }
+        $this->splitDbLogger->addRecord($severity, $message, $context);
     }
 
     /**
@@ -160,10 +170,16 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
     public function query($sql, $bind = [])
     {
         if($this->canUseReader($sql)){
-            $this->log('READER->query: '.$sql);
+            $this->log('READER', [
+                'method' => __FUNCTION__,
+                'sql' => $sql
+            ]);
             return $this->readConnection->query($sql, $bind);
         }
-        $this->log('WRITER->query: '.$sql);
+        $this->log('WRITER', [
+            'method' => __FUNCTION__,
+            'sql' => $sql
+        ]);
         return parent::query($sql, $bind);
     }
 
@@ -186,10 +202,16 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
     public function multiQuery($sql, $bind = [])
     {
         if($this->canUseReader($sql)){
-            $this->log('READER->multiQuery: '.$sql);
+            $this->log('READER', [
+                'method' => __FUNCTION__,
+                'sql' => $sql
+            ]);
             return $this->readConnection->multiQuery($sql, $bind);
         }
-        $this->log('WRITER->multiQuery: '.$sql);
+        $this->log('WRITER', [
+            'method' => __FUNCTION__,
+            'sql' => $sql
+        ]);
         return parent::multiQuery($sql, $bind);
     }
 }

@@ -45,7 +45,6 @@ After
             'engine' => 'innodb',
             'initStatements' => 'SET NAMES utf8;',
             'active' => '1',
-            'enable_splitdb_logging' => true, // this is optional
             'slaves' => [
                 [
                     'host' => '[DB_READER_1_HOST]',
@@ -63,10 +62,18 @@ After
 ],
 ```
 
-- `enable_splitdb_logging`: if supplied and true, all queries will be logged to `var/log/splitdb.log` along with an explanation of why they were sent to that endpoint.
-  I wouldn't recommend enabling this in production, but it useful if you hit any issues.
 - `slaves`: you can configure as many as you want. (Though with AWS you would only need to specify the single reader endpoint).
   The configuration for each slave is merged over the base config. So each slave will inherit all config values not defined.
   Each request will be locked to a single reader. (This is to stop multiple connections being opened)
   
 **N.B:** Don't forget to flush cache after updating the `app/etc/env.php` file and clear opache.
+
+
+## Debug
+To debug which queries are going to which endpoint while the platform is in production mode
+add 
+```php
+'log_level' => \Monolog\Logger::INFO,
+```
+to the `default` node  
+then run `tail -f var/log/system.log | grep Zero1_SplitDb` an request some pages.
