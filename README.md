@@ -68,6 +68,10 @@ After
   
 **N.B:** Don't forget to flush cache after updating the `app/etc/env.php` file and clear opache.
 
+## TODO
+- Reader exclusions
+  DB/Adapter/Pdo/MysqlProxy.php:114 this is required because Magento saves the model, then instantly tries to load it. 
+  Need to locate the offending code or find another way around.
 
 ## Debug
 To debug which queries are going to which endpoint while the platform is in production mode

@@ -112,19 +112,19 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
         }
 
         // Too many things match this
-//        $writerOnlyAreas = [
-//             '/checkout',
-//             '/customer',
-//        ];
-//
-//        if(isset($_SERVER['REQUEST_URI'])){
-//            foreach($writerOnlyAreas as $writerOnlyArea){
-//                if(stripos($_SERVER['REQUEST_URI'], $writerOnlyArea) !== false){
-//                    $this->log('WRITER only area found, '.$writerOnlyArea.' '.$_SERVER['REQUEST_URI']);
-//                    return false;
-//                }
-//            }
-//        }
+        $writerOnlyAreas = [
+             '/checkout',
+             '/customer',
+        ];
+
+        if(isset($_SERVER['REQUEST_URI'])){
+            foreach($writerOnlyAreas as $writerOnlyArea){
+                if(stripos($_SERVER['REQUEST_URI'], $writerOnlyArea) !== false){
+                    $this->log('WRITER only area found, '.$writerOnlyArea.' '.$_SERVER['REQUEST_URI']);
+                    return false;
+                }
+            }
+        }
 
         $writerSqlIdentifiers = [
             'INSERT ',
