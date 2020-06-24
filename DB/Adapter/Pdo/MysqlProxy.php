@@ -37,6 +37,8 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
 
     protected $logLevel = \Monolog\Logger::DEBUG;
 
+    protected $excludedAreas;
+
     /**
      * Constructor
      *
@@ -55,10 +57,22 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
         array $config = [],
         SerializerInterface $serializer = null
     ) {
+        // set log level
         if(isset($config['log_level'])){
             $this->logLevel = $config['log_level'];
         }
         $this->splitDbLogger = ObjectManager::getInstance()->get(\Zero1\SplitDb\Logger::class);
+
+        // set excluded areas
+        if(!isset($config['excluded_areas'])){
+            $this->excludedAreas = [
+                '/checkout',
+                '/customer',
+            ];
+        }else{
+            $this->excludedAreas = $config['excluded_areas'];
+            unset($config['excluded_areas']);
+        }
 
         if(isset($config['slaves'])){
             // keep the same slave throughout the request
@@ -111,14 +125,14 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
             return false;
         }
 
-        // Too many things match this
-        $writerOnlyAreas = [
-             '/checkout',
-             '/customer',
-        ];
+        // only do this on GET requests
+        if(isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] !== 'GET'){
+            return false;
+        }
 
+        // allow specific areas to be blocked off
         if(isset($_SERVER['REQUEST_URI'])){
-            foreach($writerOnlyAreas as $writerOnlyArea){
+            foreach($this->excludedAreas as $writerOnlyArea){
                 if(stripos($_SERVER['REQUEST_URI'], $writerOnlyArea) !== false){
                     $this->log('WRITER only area found, '.$writerOnlyArea.' '.$_SERVER['REQUEST_URI']);
                     return false;

@@ -65,7 +65,73 @@ After
 - `slaves`: you can configure as many as you want. (Though with AWS you would only need to specify the single reader endpoint).
   The configuration for each slave is merged over the base config. So each slave will inherit all config values not defined.
   Each request will be locked to a single reader. (This is to stop multiple connections being opened)
-  
+- `excluded_areas`: you can also enforce the use of the writer endpoint for specific urls. By default this will be `'/checkout'` and `'/customer'`.
+  If you don't want enforce for any areas supply an empty area   
+  ```php
+  'db' => [
+      'table_prefix' => '',
+      'connection' => [
+          'default' => [
+              'host' => '[DB_HOST]',
+              'dbname' => '[DB_NAME]',
+              'username' => '[DB_USERNAME]',
+              'password' => '[DB_PASSWORD]',
+              'model' => 'mysql4',
+              'engine' => 'innodb',
+              'initStatements' => 'SET NAMES utf8;',
+              'active' => '1',
+              'excluded_areas' => [],
+              'slaves' => [
+                  [
+                      'host' => '[DB_READER_1_HOST]',
+                      'username' => '[DB_READER_1_USERNAME]',
+                      'password' => '[DB_READER_1_PASSWORD]',
+                  ],
+                  [
+                      'host' => '[DB_READER_2_HOST]',
+                      'username' => '[DB_READER_2_USERNAME]',
+                      'password' => '[DB_READER_2_PASSWORD]',
+                  ]
+              ]
+          ]
+      ]
+  ],
+  ```
+  If you want to enforce different or more areas, supply them in an array
+  ```php
+  'db' => [
+      'table_prefix' => '',
+      'connection' => [
+          'default' => [
+              'host' => '[DB_HOST]',
+              'dbname' => '[DB_NAME]',
+              'username' => '[DB_USERNAME]',
+              'password' => '[DB_PASSWORD]',
+              'model' => 'mysql4',
+              'engine' => 'innodb',
+              'initStatements' => 'SET NAMES utf8;',
+              'active' => '1',
+              'excluded_areas' => [
+                  '/checkout',
+                  '/customer',
+                  '/another-location',
+              ],
+              'slaves' => [
+                  [
+                      'host' => '[DB_READER_1_HOST]',
+                      'username' => '[DB_READER_1_USERNAME]',
+                      'password' => '[DB_READER_1_PASSWORD]',
+                  ],
+                  [
+                      'host' => '[DB_READER_2_HOST]',
+                      'username' => '[DB_READER_2_USERNAME]',
+                      'password' => '[DB_READER_2_PASSWORD]',
+                  ]
+              ]
+          ]
+      ]
+  ],
+  ``` 
 **N.B:** Don't forget to flush cache after updating the `app/etc/env.php` file and clear opache.
 
 ## TODO
