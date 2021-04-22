@@ -147,6 +147,7 @@ class MysqlProxy extends CoreMysql implements AdapterInterface
             'DROP ',
             'CREATE ',
             'search_tmp',
+            'GET_LOCK'
         ];
         foreach($writerSqlIdentifiers as $writerSqlIdentifier){
             if(stripos($sql, $writerSqlIdentifier) !== false){
